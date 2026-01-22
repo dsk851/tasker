@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ered.tasker.domain.dto.TaskDto;
 import com.ered.tasker.domain.entities.Task;
 import com.ered.tasker.mappers.TaskMapper;
-import com.ered.tasker.repositories.TaskRepository;
 import com.ered.tasker.services.TaskService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
@@ -33,7 +31,7 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<TaskDto> ListTasks(@PathVariable("task_list_id") UUID taskListId) {
+    public List<TaskDto> listTasks(@PathVariable("task_list_id") UUID taskListId) {
 
         return taskService.listTasks(taskListId)
                 .stream()
@@ -74,5 +72,4 @@ public class TaskController {
             @PathVariable("task_id") UUID tasktId) {
         taskService.deletTask(taskListId, tasktId);
     }
-
 }
