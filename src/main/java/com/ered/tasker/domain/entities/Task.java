@@ -45,7 +45,7 @@ public class Task {
     }
 
     public Task(UUID id, String title, String description, LocalDateTime dueDate, TaskStatus status,
-            TaskPriority priority, TaskList taskList, LocalDateTime created, LocalDateTime updated) {
+            TaskPriority priority, TaskList taskList) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -53,8 +53,21 @@ public class Task {
         this.status = status;
         this.priority = priority;
         this.taskList = taskList;
-        this.created = created;
-        this.updated = updated;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.created = LocalDateTime.now();
+        this.updated = LocalDateTime.now();
+        if (this.status == null)
+            this.status = TaskStatus.OPEN; // Valeur par défaut
+        if (this.priority == null)
+            this.priority = TaskPriority.MEDIUM;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updated = LocalDateTime.now();
     }
 
     public UUID getId() {
@@ -105,11 +118,11 @@ public class Task {
         this.priority = priority;
     }
 
-    public TaskList gettaskList() {
+    public TaskList getTaskList() {
         return this.taskList;
     }
 
-    public void settaskList(TaskList taskTist) {
+    public void setTaskList(TaskList taskList) {
         this.taskList = taskList;
     }
 
@@ -160,7 +173,7 @@ public class Task {
     }
 
     public Task taskList(TaskList taskList) {
-        settaskList(taskList);
+        setTaskList(taskList);
         return this;
     }
 
@@ -183,7 +196,7 @@ public class Task {
                 ", dueDate='" + getDueDate() + "'" +
                 ", status='" + getStatus() + "'" +
                 ", priority='" + getPriority() + "'" +
-                ", taskList='" + gettaskList() + "'" +
+                ", taskList='" + getTaskList() + "'" +
                 ", created='" + getCreated() + "'" +
                 ", updated='" + getUpdated() + "'" +
                 "}";

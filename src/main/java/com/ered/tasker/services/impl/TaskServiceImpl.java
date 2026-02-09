@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import com.ered.tasker.domain.entities.Task;
@@ -14,6 +15,7 @@ import com.ered.tasker.domain.entities.TaskPriority;
 import com.ered.tasker.domain.entities.TaskStatus;
 import com.ered.tasker.repositories.TaskRepository;
 import com.ered.tasker.repositories.TaskListRepository;
+import com.ered.tasker.repositories.UserRepository;
 import com.ered.tasker.services.TaskService;
 
 import jakarta.transaction.Transactional;
@@ -22,20 +24,25 @@ import jakarta.transaction.Transactional;
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final TaskListRepository taskListRepository;
+    private final UserRepository userRepository;
 
-    public TaskServiceImpl(TaskRepository taskRepository, TaskListRepository taskListRepository) {
+    public TaskServiceImpl(TaskRepository taskRepository, TaskListRepository taskListRepository,
+            UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.taskListRepository = taskListRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public List<Task> listTasks(UUID taskListId) {
-        return taskRepository.findByTaskListId(taskListId);
+    public List<Task> listTasks(UUID taskListId, String username) {
+        UserDetails user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return taskRepository.findAllByTaskListIdAndUsername(taskListId, user.getUsername());
     }
 
     @Transactional
     @Override
-    public Task creatTask(UUID taskListId, Task task) {
+    public Task creatTask(UUID taskListId, String username, Task task) {
         if (null != task.getId()) {
             throw new IllegalArgumentException("Task already have an ID");
         }
@@ -48,12 +55,13 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Task list ID is not specify");
         }
 
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username must be provided");
+        }
+
         TaskPriority taskpriority = Optional.ofNullable(task.getPriority()).orElse(TaskPriority.MEDIUM);
 
-        TaskStatus taskStatus = TaskStatus.OPEN;
-        LocalDateTime now = LocalDateTime.now();
-
-        TaskList taskList = taskListRepository.findById(taskListId)
+        TaskList taskList = taskListRepository.findByIdAndUserUsername(taskListId, username)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Tasl List ID provided !!"));
 
         Task taskToSave = new Task(
@@ -61,29 +69,31 @@ public class TaskServiceImpl implements TaskService {
                 task.getTitle(),
                 task.getDescription(),
                 task.getDueDate(),
-                taskStatus,
+                task.getStatus(),
                 taskpriority,
-                taskList,
-                now,
-                now);
+                taskList);
 
         return taskRepository.save(taskToSave);
 
     }
 
     @Override
-    public Optional<Task> getTasks(UUID taskListId, UUID taskId) {
+    public Optional<Task> getTask(UUID taskListId, UUID taskId, String username) {
         if (null == taskListId || null == taskId) {
             throw new IllegalArgumentException("Id missing !!");
         }
 
-        return taskRepository.findByTaskListIdAndId(taskListId, taskId);
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username must be provided");
+        }
+
+        return taskRepository.findByTaskListIdAndTaskIdAndUsername(taskListId, taskId, username);
 
     }
 
     @Transactional
     @Override
-    public Task updateTask(UUID taskListId, UUID taskId, Task task) {
+    public Task updateTask(UUID taskListId, UUID taskId, Task task, String username) {
         if (null == taskListId || null == taskId) {
             throw new IllegalArgumentException("Id missing !!");
         }
@@ -100,15 +110,19 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Task must have a Status");
         }
 
-        Task existingTask = taskRepository.findByTaskListIdAndId(taskListId, taskId)
+        if(username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username must be provided");
+        }
+
+        Task existingTask = taskRepository.findByTaskListIdAndTaskIdAndUsername(taskListId, taskId, username)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
 
         existingTask.setTitle(task.getTitle());
         existingTask.setDescription(task.getDescription());
         existingTask.setPriority(task.getPriority());
         existingTask.setStatus(task.getStatus());
-        existingTask.setDueDate(task.getDueDate());
-        existingTask.setUpdated(LocalDateTime.now());
+        existingTask.setDueDate(task.getDueDate()
+        );
 
         return taskRepository.save(existingTask);
 
@@ -116,8 +130,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public void deletTask(UUID taskListId, UUID taskId) {
-        taskRepository.deleteByTaskListIdAndId(taskListId, taskId);
+    public void deletTask(UUID taskListId, UUID taskId, String username) {
+        taskRepository.deleteByTaskListIdAndIdAndUsername(taskListId, taskId, username);
     }
-
 }

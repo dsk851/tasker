@@ -5,13 +5,13 @@ import java.util.*;
 import com.ered.tasker.domain.entities.Task;
 
 public interface TaskService {
-    List<Task> listTasks(UUID taskListId);
+    List<Task> listTasks(UUID taskListId, String username);
 
-    Task creatTask(UUID taskListId, Task task);
+    Task creatTask(UUID taskListId, String username, Task task);
 
-    Optional<Task> getTasks(UUID taskListId, UUID taskId);
+    Optional<Task> getTask(UUID taskListId, UUID taskId, String username);
 
-    Task updateTask(UUID taskListId, UUID taskId, Task task);
+    Task updateTask(UUID taskListId, UUID taskId, Task task, String username);
   
-    void deletTask(UUID taskListId, UUID taskId);
+    void deletTask(UUID taskListId, UUID taskId, String username);
 }

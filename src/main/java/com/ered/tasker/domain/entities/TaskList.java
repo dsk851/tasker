@@ -25,24 +25,35 @@ public class TaskList {
     @Column(name = "description")
     private String description; 
 
-    @Column(name = "created", nullable = false)
-    private LocalDateTime created;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
-    @Column(name = "updated", nullable = false)
-    private LocalDateTime updated;
+    @Column(name = "createdAt", nullable = false)
+    private LocalDateTime createdAt;
 
-    
+    @Column(name = "updatedAt", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public TaskList() {
     }
 
-    public TaskList(UUID id, String title, String description, List<Task> tasks, LocalDateTime created, LocalDateTime updated) {
+    public TaskList(UUID id, String title, String description, List<Task> tasks) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.tasks = tasks;
-        this.created = created;
-        this.updated = updated;
     }
 
     public UUID getId() {
@@ -77,20 +88,28 @@ public class TaskList {
         this.description = description;
     }
 
-    public LocalDateTime getCreated() {
-        return this.created;
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 
-    public void setCreated(LocalDateTime created) {
-        this.created = created;
+    public UserEntity getUser() {
+        return this.user;
     }
 
-    public LocalDateTime getUpdated() {
-        return this.updated;
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
     }
 
-    public void setUpdated(LocalDateTime updated) {
-        this.updated = updated;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return this.updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public TaskList id(UUID id) {
@@ -113,13 +132,13 @@ public class TaskList {
         return this;
     }
 
-    public TaskList created(LocalDateTime created) {
-        setCreated(created);
+    public TaskList createdAt(LocalDateTime createdAt) {
+        setCreatedAt(createdAt);
         return this;
     }
 
-    public TaskList updated(LocalDateTime updated) {
-        setUpdated(updated);
+    public TaskList updatedAt(LocalDateTime updatedAt) {
+        setUpdatedAt(updatedAt);
         return this;
     }
 
@@ -131,12 +150,12 @@ public class TaskList {
             return false;
         }
         TaskList taskList = (TaskList) o;
-        return Objects.equals(id, taskList.id) && Objects.equals(title, taskList.title) && Objects.equals(tasks, taskList.tasks) && Objects.equals(description, taskList.description) && Objects.equals(created, taskList.created) && Objects.equals(updated, taskList.updated);
+        return Objects.equals(id, taskList.id) && Objects.equals(title, taskList.title) && Objects.equals(tasks, taskList.tasks) && Objects.equals(description, taskList.description) && Objects.equals(createdAt, taskList.createdAt) && Objects.equals(updatedAt, taskList.updatedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, tasks, description, created, updated);
+        return Objects.hash(id, title, tasks, description, createdAt, updatedAt);
     }
 
     @Override
@@ -146,8 +165,8 @@ public class TaskList {
             ", title='" + getTitle() + "'" +
             ", tasks='" + getTasks() + "'" +
             ", description='" + getDescription() + "'" +
-            ", created='" + getCreated() + "'" +
-            ", updated='" + getUpdated() + "'" +
+            ", createdAt='" + getCreatedAt() + "'" +
+            ", updatedAt='" + getUpdatedAt() + "'" +
             "}";
     }
     
